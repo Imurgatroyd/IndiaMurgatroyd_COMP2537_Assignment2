@@ -182,7 +182,7 @@ app.get('/members', (req, res) => {
     }
 
     //Bring in images and randomize
-    const images = ['ChamonixMountain.jpg', 'Whistlermountain.jpg', 'VancouverMountain.jpg'];
+    const images = ['ChamonixMountain.jpg', 'WhistlerMountain.jpg', 'VancouverMountain.jpg'];
     const randomImage = images[Math.floor(Math.random() * images.length)];
 
     //Hello message with random image
