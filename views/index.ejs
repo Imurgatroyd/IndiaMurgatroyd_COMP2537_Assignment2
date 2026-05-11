@@ -1,0 +1,21 @@
+<%- include('templates/header') %>
+
+<h1 class="mb-4">Home</h1>
+
+<% if (user) { %>
+
+    <!-- Shown when logged in -->
+    <p class="lead">Hello, <%= user.name %>!</p>
+    <a href="/members" class="btn btn-primary me-2">Go to Members Area</a>
+    <a href="/logout" class="btn btn-secondary">Logout</a>
+
+<% } else { %>
+
+    <!-- Shown when not logged in -->
+    <p class="lead">Welcome! Please sign up or log in.</p>
+    <a href="/signup" class="btn btn-primary me-2">Sign Up</a>
+    <a href="/login" class="btn btn-outline-primary">Log In</a>
+
+<% } %>
+
+<%- include('templates/footer') %>

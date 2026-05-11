@@ -1,0 +1,12 @@
+<%- include('templates/header') %>
+
+<h1 class="mb-4">Users</h1>
+
+<ul class="list-group">
+    <!-- Loop over every user-->
+    <% users.forEach(function(user) { %>
+        <%- include('templates/user', { user: user }) %>
+    <% }) %>
+</ul>
+
+<%- include('templates/footer') %>

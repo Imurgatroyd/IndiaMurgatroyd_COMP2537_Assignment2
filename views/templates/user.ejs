@@ -1,0 +1,18 @@
+<li class = "list-group-item d-flex justify-content-between align-items-center">
+    <span><%= user.name %> (<%= user.user_type || 'user' %>)</span>
+
+    <div>
+        <!--Promote button-->
+        <form action = "/promoteUser" method = "POST" class = "d-inline">
+            <input type = "hidden" name = "email" value = "<%= user.email %>">
+            <button type="submit" class="btn btn-success btn-sm">Promote to Admin</button>
+        </form>
+
+        <!--Demote button-->
+        <form action="/demoteUser" method="POST" class="d-inline">
+            <input type="hidden" name="email" value="<%= user.email %>">
+            <button type="submit" class="btn btn-danger btn-sm">Demote to User</button>
+        </form>
+
+    </div>
+</li>

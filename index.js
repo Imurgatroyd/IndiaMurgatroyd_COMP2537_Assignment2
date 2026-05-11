@@ -56,6 +56,8 @@ app.use(session({
     cookie: { maxAge: 60 * 60 * 1000 }
 }));
 
+app.set('view engine', 'ejs');
+
 
 //Home page route
 app.get('/', (req, res) => {

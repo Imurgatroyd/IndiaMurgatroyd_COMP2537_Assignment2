@@ -1,0 +1,16 @@
+<%- include('templates/header') %>
+
+<h1 class="mb-4">Hello, <%= user.name %>.</h1>
+
+<!--Using a Bootsrtrap responsive grid so it shows up differently on different width devices-->
+<div class="row">
+    <% images.forEach(function(image) { %>
+        <div class="col-12 col-md-4 mb-3">
+            <img src="/<%= image %>" class="img-fluid rounded" alt="Member image">
+        </div>
+    <% }) %>
+</div>
+
+<a href="/logout" class="btn btn-secondary mt-3">Sign Out</a>
+
+<%- include('templates/footer') %>
