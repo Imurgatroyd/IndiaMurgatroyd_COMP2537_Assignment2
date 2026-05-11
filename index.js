@@ -72,7 +72,7 @@ function isLoggedIn(req, res, next) {
 //Checking if user is admin
 function isAdmin(req, res, next) {
     if (req.session.user.user_type !== 'admin') {
-        return res.status(403),send(`
+        return res.status(403).send(`
             <h1>403 - Not Authorized</h1>
             <p>You do not have permission to view this page</p>
             <a href="/">Go Home</a>
@@ -200,7 +200,7 @@ app.get('/admin', isLoggedIn, isAdmin, async (req , res) => {
 
 
 //Promote user *new*
-app.post('/promoteUser', async (req, res) => {
+app.post('/promoteUser', isLoggedIn, async (req, res) => {
 
     //Validate with Joi
     const schema = Joi.object({ email: Joi.string().email().required() });
@@ -218,7 +218,7 @@ app.post('/promoteUser', async (req, res) => {
 
 
 //Demote user *new*
-app.post('demoteUser', async (req, res) => {
+app.post('/demoteUser', uisLoggedIn, async (req, res) => {
 
     //Validate with Joi
     const schema = Joi.object({ email: Joi.string().email().required() });
