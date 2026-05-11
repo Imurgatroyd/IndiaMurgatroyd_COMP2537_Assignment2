@@ -11,6 +11,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 const saltRounds = 12;
 
+app.set('view engine', 'ejs');
+
 //MongoDB connection
 const mongoUri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_HOST}/${process.env.MONGODB_DATABASE}?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=true`;
 
@@ -56,42 +58,42 @@ app.use(session({
     cookie: { maxAge: 60 * 60 * 1000 }
 }));
 
-app.set('view engine', 'ejs');
+
+//Checking if a user is logged in
+function isLoggedIn(req, res, next) {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+
+    next();
+}
+
+
+//Checking if user is admin
+function isAdmin(req, res, next) {
+    if (req.session.user.user_type !== 'admin') {
+        return res.status(403),send(`
+            <h1>403 - Not Authorized</h1>
+            <p>You do not have permission to view this page</p>
+            <a href="/">Go Home</a>
+            `);
+    }
+
+    next();
+}
 
 
 //Home page route
 app.get('/', (req, res) => {
 
-    //If user is logged in
-    if (req.session.user) {
-        res.send(`
-            <h1>Hello, ${req.session.user.name}!</h1>
-            <a href="members"><button>Go to Members Area</button></a>
-            <a href="/logout"><button>Logout</button>
-        `);
-
-    //If user not logged in 
-    } else {
-        res.send(`
-            <h1>Home</h1>
-            <a href="/signup"><button>Sign up</button></a>
-            <a href="/login"><button>Log in</button></a>
-        `);   
-    }
+    //Change
+    res.render('index', { user: req.session.user || null });
 });
 
 
 //Signup page 
 app.get('/signup', (req, res) => {
-    res.send(`
-        <h2>create user</h2>
-        <form action="/signupSubmit" method="POST">
-          <input name="name" placeholder="name" /><br>
-          <input name="email" placeholder="email" /><br>
-          <input name="password" type="password" placeholder="password" /><br>
-          <button type="submit">Submit</button>
-        </form>
-    `);
+    res.render('signup');
 })
 
 //Signup Submit logic
@@ -123,23 +125,21 @@ app.post('/signupSubmit', async (req, res) => {
 
     //Hashing passwords and making user profile
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    await userCollection.insertOne({ name, email, password: hashedPassword });
+
+    //Change: made type user for each new sign up
+    await userCollection.insertOne({ name, email, password: hashedPassword, user_type: 'user' });
 
     //Assign the new user to the current user and redirect
-    req.session.user = { name, email };
+    //Change
+    req.session.user = { name, email, user_type: 'user'  };
     res.redirect('/members');
 });
 
 
 //Login page
 app.get('/login', (req, res) => {
-    res.send(`
-        <form action="/loginSubmit" method="POST">
-          <input name="email" placeholder="email" /><br>
-          <input name="password" type="password" placeholder="password" /><br>
-          <button type="submit">Submit</button>
-        </form>
-    `);
+    //Change
+    res.render('login');
 });
 
 
@@ -170,30 +170,69 @@ app.post('/loginSubmit', async (req, res) => {
     }
 
     //Set current user as logged in user and redirect
-    req.session.user = { name: user.name, email: user.email };
+    //Change
+    req.session.user = { name: user.name, email: user.email, user_type: user.user_type };
     res.redirect('/members');
 })
 
 
 //Members page
-app.get('/members', (req, res) => {
-
-    //If no user logged in, redirect to home
-    if (!req.session.user) {
-        return res.redirect('/');
-    }
-
-    //Bring in images and randomize
+app.get('/members', isLoggedIn, (req, res) => {
+    //Bring in images and *Change* display all 3 
     const images = ['ChamonixMountain.jpg', 'WhistlerMountain.jpg', 'VancouverMountain.jpg'];
-    const randomImage = images[Math.floor(Math.random() * images.length)];
 
-    //Hello message with random image
-    res.send(`
-        <h1>Hello, ${req.session.user.name}.</h1>
-        <img src="/${randomImage}" width="300" /><br><br>
-        <a href="/logout"><button>Sign out</button></a>
-    `);
+    //Hello message with images
+    //Change
+    res.render('members', {
+        user: req.session.user,
+        images: images
+    });
 });
+
+
+//Admin *new*
+app.get('/admin', isLoggedIn, isAdmin, async (req , res) => {
+
+    //if user is admin, render the admin page
+    const users = await userCollection.find().toArray();
+    res.render('admin', { users: users });
+});
+
+
+//Promote user *new*
+app.post('/promoteUser', async (req, res) => {
+
+    //Validate with Joi
+    const schema = Joi.object({ email: Joi.string().email().required() });
+    const { error } = schema.validate({ email: req.body.email });
+    if (error) return res.status(400).send('Invalid input');
+
+    //upgrade user to admin
+    await userCollection.updateOne(
+        { email: req.body.email },
+        { $set: { user_type: 'admin' } }
+    );
+
+    res.redirect('/admin');
+});
+
+
+//Demote user *new*
+app.post('demoteUser', async (req, res) => {
+
+    //Validate with Joi
+    const schema = Joi.object({ email: Joi.string().email().required() });
+    const { error } = schema.validate({ email: req.body.email });
+    if (error) return res.status(400).send('Invalid input');
+
+    //Downgrade user to user
+    await userCollection.updateOne(
+        { email: req.body.email },
+        { $set: { user_type: 'user' } }
+    );
+
+    res.redirect('/admin');
+})
 
 
 //Logout
@@ -205,7 +244,8 @@ app.get('/logout', (req, res) => {
 
 //404 page
 app.get('*', (req, res) => {
-    res.status(404).send('<h1>Page not found - 404</h1>');
+    //Change
+    res.status(404).render('404');
 });
  
  
