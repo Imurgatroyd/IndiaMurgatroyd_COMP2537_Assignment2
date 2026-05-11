@@ -218,7 +218,7 @@ app.post('/promoteUser', isLoggedIn, async (req, res) => {
 
 
 //Demote user *new*
-app.post('/demoteUser', uisLoggedIn, async (req, res) => {
+app.post('/demoteUser', isLoggedIn, async (req, res) => {
 
     //Validate with Joi
     const schema = Joi.object({ email: Joi.string().email().required() });
